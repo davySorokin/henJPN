@@ -18,11 +18,7 @@ func main() {
 	}
 
 	totp := "YOUR_GENERATED_TOTP"
-
-	// Step 3: Encode Authorization header
 	auth := base64.StdEncoding.EncodeToString([]byte(payload["contact_email"] + ":" + totp))
-
-	// Step 4: Prepare and send the HTTP POST request
 	jsonData, _ := json.Marshal(payload)
 	req, err := http.NewRequest("POST", "https://api.challenge.hennge.com/challenges/003", bytes.NewBuffer(jsonData))
 	if err != nil {
