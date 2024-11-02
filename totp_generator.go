@@ -11,7 +11,6 @@ import (
 func GenerateTOTP(email string) (string, error) {
 	secret := email + "HENNGECHALLENGE003"
 	encodedSecret := base32.StdEncoding.EncodeToString([]byte(secret))
-
 	otp, err := totp.GenerateCodeCustom(encodedSecret, time.Now(), totp.ValidateOpts{
 		Period:    30,
 		Skew:      1,

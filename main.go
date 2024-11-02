@@ -10,6 +10,19 @@ import (
 	"os"
 )
 
+func readJSONFile(filename string) (map[string]string, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	byteValue, _ := ioutil.ReadAll(file)
+	var result map[string]string
+	json.Unmarshal(byteValue, &result)
+	return result, nil
+}
+
 func main() {
 	payload, err := readJSONFile("submission.json")
 	if err != nil {
@@ -44,17 +57,4 @@ func main() {
 	defer resp.Body.Close()
 
 	fmt.Println("Response Status:", resp.Status)
-}
-
-func readJSONFile(filename string) (map[string]string, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	byteValue, _ := ioutil.ReadAll(file)
-	var result map[string]string
-	json.Unmarshal(byteValue, &result)
-	return result, nil
 }
