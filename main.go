@@ -1,40 +1,56 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
-	"strconv"
-	"strings"
 )
 
 func main() {
-	scanner := bufio.NewScanner(os.Stdin)
-
-	// Read number of test cases
-	scanner.Scan()
-	n, _ := strconv.Atoi(scanner.Text())
-	results := make([]int, n)
-
-	// Process each test case
-	for i := 0; i < n; i++ {
-		scanner.Scan() // Read and ignore X
-		// Read the space-separated integers
-		scanner.Scan()
-		numbers := strings.Fields(scanner.Text())
-		// Calculate the sum of squares of non-negative integers
-		sum := 0
-		for _, numStr := range numbers {
-			num, _ := strconv.Atoi(numStr)
-			if num >= 0 {
-				sum += num * num
-			}
-		}
-		results[i] = sum
+	payload, err := readJSONFile("submission.json")
+	if err != nil {
+		fmt.Println("Error reading JSON file:", err)
+		return
 	}
 
-	// Print all results without blank lines in between
-	for _, result := range results {
-		fmt.Println(result)
+	totp := "YOUR_GENERATED_TOTP"
+
+	// Step 3: Encode Authorization header
+	auth := base64.StdEncoding.EncodeToString([]byte(payload["contact_email"] + ":" + totp))
+
+	// Step 4: Prepare and send the HTTP POST request
+	jsonData, _ := json.Marshal(payload)
+	req, err := http.NewRequest("POST", "https://api.challenge.hennge.com/challenges/003", bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return
 	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Basic "+auth)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error making request:", err)
+		return
+	}
+	defer resp.Body.Close()
+	fmt.Println("Response Status:", resp.Status)
+}
+
+func readJSONFile(filename string) (map[string]string, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	byteValue, _ := ioutil.ReadAll(file)
+	var result map[string]string
+	json.Unmarshal(byteValue, &result)
+	return result, nil
 }
