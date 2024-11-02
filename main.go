@@ -10,6 +10,19 @@ import (
 	"os"
 )
 
+func readJSONFile(filename string) (map[string]string, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	byteValue, _ := ioutil.ReadAll(file)
+	var result map[string]string
+	json.Unmarshal(byteValue, &result)
+	return result, nil
+}
+
 func main() {
 	payload, err := readJSONFile("submission.json")
 	if err != nil {
@@ -17,12 +30,15 @@ func main() {
 		return
 	}
 
-	totp := "YOUR_GENERATED_TOTP"
+	email := payload["contact_email"]
+	totp, err := GenerateTOTP(email)
+	if err != nil {
+		fmt.Println("Error generating TOTP:", err)
+		return
+	}
 
-	// Step 3: Encode Authorization header
-	auth := base64.StdEncoding.EncodeToString([]byte(payload["contact_email"] + ":" + totp))
+	auth := base64.StdEncoding.EncodeToString([]byte(email + ":" + totp))
 
-	// Step 4: Prepare and send the HTTP POST request
 	jsonData, _ := json.Marshal(payload)
 	req, err := http.NewRequest("POST", "https://api.challenge.hennge.com/challenges/003", bytes.NewBuffer(jsonData))
 	if err != nil {
@@ -39,18 +55,6 @@ func main() {
 		return
 	}
 	defer resp.Body.Close()
+
 	fmt.Println("Response Status:", resp.Status)
-}
-
-func readJSONFile(filename string) (map[string]string, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	byteValue, _ := ioutil.ReadAll(file)
-	var result map[string]string
-	json.Unmarshal(byteValue, &result)
-	return result, nil
 }
