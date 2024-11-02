@@ -17,8 +17,15 @@ func main() {
 		return
 	}
 
-	totp := "YOUR_GENERATED_TOTP"
-	auth := base64.StdEncoding.EncodeToString([]byte(payload["contact_email"] + ":" + totp))
+	email := payload["contact_email"]
+	totp, err := GenerateTOTP(email)
+	if err != nil {
+		fmt.Println("Error generating TOTP:", err)
+		return
+	}
+
+	auth := base64.StdEncoding.EncodeToString([]byte(email + ":" + totp))
+
 	jsonData, _ := json.Marshal(payload)
 	req, err := http.NewRequest("POST", "https://api.challenge.hennge.com/challenges/003", bytes.NewBuffer(jsonData))
 	if err != nil {
@@ -35,6 +42,7 @@ func main() {
 		return
 	}
 	defer resp.Body.Close()
+
 	fmt.Println("Response Status:", resp.Status)
 }
 
